@@ -1,0 +1,33 @@
+version: '3.5'
+
+services:
+    phpmyadmin:
+        container_name: api-platform-phpmyadmin
+        image: phpmyadmin/phpmyadmin
+        environment:
+            - PMA_ARBITRARY=1
+            - PMA_HOST=api-platform-db
+            - PMA_USER=root
+            - PMA_PASSWORD=root
+        restart: always
+        ports:
+            - "8080:80"
+        volumes:
+            - /sessions
+
+    api-platform-php:
+        container_name: api-platform-php
+        build:
+            context: ${PWD}/docker/api-platform-php
+            dockerfile: Dockerfile
+            args:
+              - WITH_XDEBUG=true
+        env_file: .phpdebug.env.dev
+        expose:
+            - 9000
+            - 9001
+        ports:
+            - "9001:9001"
+        volumes:
+            - api_platform_files:/var/www/api-platform:rw
+

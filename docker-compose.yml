@@ -1,0 +1,96 @@
+version: '3.5'
+
+services:
+    api-platform-php:
+        container_name: api_platform_php
+        build:
+            context: ${PWD}/docker/api-platform-php
+            dockerfile: Dockerfile
+        expose:
+            - 9000
+        volumes:
+            - api-platform-files:/var/www/api-platform
+
+    api-platform-nginx:
+        container_name: api_platform_nginx
+        build:
+          context: ${PWD}/docker/api-platform-nginx
+          args:
+            server_name: api-platform.local
+        links:
+            - api-platform-php
+        volumes:
+            - api-platform-files:/var/www/api-platform
+        expose:
+            - 8181
+        ports:
+            - "8181:80"
+        networks:
+            default:
+                aliases:
+                    - api-platform.local
+                    - api-platform.localhost
+
+    front-php:
+        container_name: front_php
+        build:
+            context: ${PWD}/docker/front-php
+            dockerfile: Dockerfile
+        expose:
+            - 9001
+        volumes:
+            - front-files:/var/www/front
+
+    front-nginx:
+        container_name: front_nginx
+        build:
+            context: ${PWD}/docker/front-nginx
+            args:
+                server_name: front.local
+        links:
+            - api-platform-php
+        volumes:
+            - api-platform-files:/var/www/api-platform
+        expose:
+            - 80
+        ports:
+            - "80:80"
+        networks:
+            default:
+                aliases:
+                    - front.local
+                    - front.localhost
+
+    api-platform-db:
+        container_name: api-platform-db
+        image: mariadb:latest
+        expose:
+            - 3306
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: api-platform-db
+            MYSQL_USER: api-platform
+            MYSQL_PASSWORD: api-platform-db
+
+networks:
+    default:
+        name: api-platform-network
+
+volumes:
+    api-platform-files:
+        name: api_platform_files
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: ${API_PLATFORM_PROJECT_PATH}
+
+    front-files:
+        name: front_files
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: ${FRONT_PROJECT_PATH}
